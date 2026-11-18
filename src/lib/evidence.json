@@ -1,4 +1,18 @@
 {
+  "python network scanner": [
+    {
+      "src": "/evidence/python-port-scanner.webp",
+      "original": "Screenshot 2026-11-17 160656.png"
+    },
+    {
+      "src": "/evidence/python-banner-grabber.webp",
+      "original": "Screenshot 2026-11-17 160535.png"
+    },
+    {
+      "src": "/evidence/python-banner-grabber-detail.webp",
+      "original": "Screenshot 2026-11-17 160717.png"
+    }
+  ],
   "basic pentesting 1": [
     {
       "src": "/evidence/basic-pentesting-1-00.webp",
