@@ -8,6 +8,7 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 *.log
-# Screenshots may contain host details or credentials; review and redact before publishing.
+# Keep original screenshots local. Publish reviewed WebP copies from public/evidence/.
 labs_images/
-public/evidence/
+public/evidence/*
+!public/evidence/*.webp
