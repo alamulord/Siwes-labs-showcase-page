@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+enum Status {
+  DRAFT
+  PUBLISHED
+}
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+enum ProjectType {
+  SECURITY_LAB
+  PROGRAMMING
+  NETWORKING
+  RESEARCH
+  OTHER
+}
+model AdminProfile {
+  id String @id @db.Uuid
+  label String @default("Administrator")
+  createdAt DateTime @default(now())
+  assets MediaAsset[]
+}
+model Category {
+  id String @id @default(cuid())
+  name String @unique
+  projects Project[]
+  certificates Certificate[]
+  resources Resource[]
+}
+model Tag {
+  id String @id @default(cuid())
+  name String @unique
+  projects ProjectTag[]
+}
+model Technology {
+  id String @id @default(cuid())
+  name String @unique
+  projects ProjectTechnology[]
+}
+model Project {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  summary String
+  markdown String @default("")
+  categoryId String
+  category Category @relation(fields:[categoryId], references:[id], onDelete:Restrict)
+  difficulty Difficulty @default(BEGINNER)
+  projectType ProjectType @default(OTHER)
+  projectDate DateTime
+  githubUrl String?
+  liveUrl String?
+  seoTitle String?
+  seoDescription String?
+  status Status @default(DRAFT)
+  featured Boolean @default(false)
+  pinnedOrder Int @default(0)
+  coverId String?
+  cover MediaAsset? @relation("Cover", fields:[coverId], references:[id], onDelete:Restrict)
+  architectureId String?
+  architecture MediaAsset? @relation("Architecture", fields:[architectureId], references:[id], onDelete:Restrict)
+  images ProjectImage[]
+  downloads ProjectDownload[]
+  videos ProjectVideo[]
+  tags ProjectTag[]
+  technologies ProjectTechnology[]
+  timeline TimelineEvent[]
+  redirects SlugRedirect[]
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, projectDate])
+  @@index([status, categoryId, difficulty])
+  @@index([featured, pinnedOrder])
+}
+model ProjectTag {
+  projectId String
+  tagId String
+  project Project @relation(fields:[projectId], references:[id], onDelete:Cascade)
+  tag Tag @relation(fields:[tagId], references:[id], onDelete:Cascade)
+  @@id([projectId,tagId])
+}
+model ProjectImage {
+  id String @id @default(cuid())
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  assetId String
+  asset MediaAsset @relation(fields:[assetId],references:[id],onDelete:Restrict)
+  caption String @default("")
+  sortOrder Int @default(0)
+  @@unique([projectId,assetId])
+}
+model ProjectDownload {
+  id String @id @default(cuid())
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  assetId String
+  asset MediaAsset @relation(fields:[assetId],references:[id],onDelete:Restrict)
+  title String
+  @@unique([projectId,assetId])
+}
+model ProjectVideo {
+  id String @id @default(cuid())
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  url String
+  title String @default("")
+}
+model ProjectTechnology {
+  projectId String
+  technologyId String
+  project Project @relation(fields:[projectId], references:[id], onDelete:Cascade)
+  technology Technology @relation(fields:[technologyId], references:[id], onDelete:Cascade)
+  @@id([projectId,technologyId])
+  @@index([technologyId])
+}
+model SkillCategory {
+  id String @id @default(cuid())
+  name String @unique
+  sortOrder Int @default(0)
+  skills Skill[]
+}
+model Skill {
+  id String @id @default(cuid())
+  name String
+  categoryId String
+  category SkillCategory @relation(fields:[categoryId], references:[id], onDelete:Restrict)
+  icon String @default("code")
+  proficiency String @default("Learning")
+  evidenceUrl String?
+  sortOrder Int @default(0)
+}
+model MediaAsset {
+  id String @id @default(cuid())
+  providerAssetId String @unique
+  publicId String @unique
+  deliveryUrl String
+  resourceType String
+  format String
+  mimeType String
+  bytes Int
+  width Int?
+  height Int?
+  alt String
+  caption String @default("")
+  ownerId String @db.Uuid
+  owner AdminProfile @relation(fields:[ownerId], references:[id], onDelete:Restrict)
+  createdAt DateTime @default(now())
+  covers Project[] @relation("Cover")
+  architectures Project[] @relation("Architecture")
+  projectImages ProjectImage[]
+  projectDownloads ProjectDownload[]
+  gallery GalleryItem[]
+  certificatePdfs Certificate[] @relation("CertificatePdf")
+  certificateThumbnails Certificate[] @relation("CertificateThumbnail")
+  resources Resource[]
+  @@index([createdAt])
+}
+model GalleryItem {
+  id String @id @default(cuid())
+  title String
+  assetId String
+  asset MediaAsset @relation(fields:[assetId], references:[id], onDelete:Restrict)
+  group String @default("General")
+  caption String @default("")
+  sortOrder Int @default(0)
+  status Status @default(DRAFT)
+}
+model Certificate {
+  id String @id @default(cuid())
+  title String
+  issuer String
+  issueDate DateTime
+  categoryId String?
+  category Category? @relation(fields:[categoryId], references:[id], onDelete:SetNull)
+  description String @default("")
+  credentialUrl String?
+  credentialId String?
+  pdfId String?
+  pdf MediaAsset? @relation("CertificatePdf",fields:[pdfId],references:[id],onDelete:Restrict)
+  thumbnailId String?
+  thumbnail MediaAsset? @relation("CertificateThumbnail",fields:[thumbnailId],references:[id],onDelete:Restrict)
+  status Status @default(DRAFT)
+}
+model Resource {
+  id String @id @default(cuid())
+  title String
+  description String @default("")
+  resourceType String @default("REPORT")
+  categoryId String?
+  category Category? @relation(fields:[categoryId],references:[id],onDelete:SetNull)
+  markdown String @default("")
+  externalUrl String?
+  assetId String?
+  asset MediaAsset? @relation(fields:[assetId],references:[id],onDelete:Restrict)
+  status Status @default(DRAFT)
+  sortOrder Int @default(0)
+  reportSettings SiteSettings[]
+}
+model TimelineEvent {
+  id String @id @default(cuid())
+  title String
+  startDate DateTime
+  endDate DateTime?
+  description String
+  projectId String?
+  project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+  sortOrder Int @default(0)
+  status Status @default(DRAFT)
+}
+model SiteSettings {
+  id String @id @default("site")
+  name String @default("Your name")
+  title String @default("SIWES Cybersecurity Portfolio")
+  introduction String @default("Add your introduction in Settings.")
+  role String @default("Training focus — add your details")
+  organization String @default("")
+  startDate DateTime?
+  endDate DateTime?
+  githubUrl String?
+  linkedinUrl String?
+  email String?
+  portfolioUrl String?
+  seoDescription String @default("Projects, practical labs, and learning from industrial training.")
+  technologies String @default("")
+  ethicalContext String @default("Security work shown here is limited to authorized labs and ethical research.")
+  reportId String?
+  report Resource? @relation(fields:[reportId],references:[id],onDelete:SetNull)
+  showGallery Boolean @default(true)
+  showTimeline Boolean @default(true)
+}
+model AnalyticsDaily {
+  day DateTime @db.Date
+  kind String
+  target String
+  count Int @default(0)
+  @@id([day,kind,target])
+}
+model RateLimit {
+  key String @id
+  count Int @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+model SlugRedirect {
+  slug String @id
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+}

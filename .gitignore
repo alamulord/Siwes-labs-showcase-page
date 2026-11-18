@@ -1,0 +1,13 @@
+node_modules/
+.npm-cache/
+.next/
+out/
+.env*
+!.env.example
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+*.log
+# Screenshots may contain host details or credentials; review and redact before publishing.
+labs_images/
+public/evidence/

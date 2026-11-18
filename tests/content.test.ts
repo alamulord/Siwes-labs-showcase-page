@@ -1,0 +1,11 @@
+import { it,expect,vi } from "vitest";
+const m=vi.hoisted(()=>({findMany:vi.fn().mockResolvedValue([]),count:vi.fn().mockResolvedValue(0),findFirst:vi.fn().mockResolvedValue(null),revalidateTag:vi.fn(),revalidatePath:vi.fn(),transaction:vi.fn((calls:Promise<unknown>[])=>Promise.all(calls))}));
+vi.mock("server-only",()=>({}));
+vi.mock("@/lib/env",()=>({configured:true}));
+vi.mock("@/lib/db",()=>({db:{project:{findMany:m.findMany,count:m.count,findFirst:m.findFirst},$transaction:m.transaction}}));
+vi.mock("next/cache",()=>({unstable_cache:(fn:unknown)=>fn,revalidateTag:m.revalidateTag,revalidatePath:m.revalidatePath}));
+import { projectPage,publicProject,invalidateContent } from "@/lib/content";
+import { parseSearch } from "@/lib/search";
+it("paginates in the database and queries only published records",async()=>{await projectPage(parseSearch({page:"3",sort:"oldest"}));expect(m.findMany).toHaveBeenCalledWith(expect.objectContaining({where:{status:"PUBLISHED"},skip:18,take:9,orderBy:[{projectDate:"asc"},{id:"asc"}]}));});
+it("does not retrieve drafts by public slug",async()=>{await publicProject("private-draft");expect(m.findFirst).toHaveBeenCalledWith(expect.objectContaining({where:{slug:"private-draft",status:"PUBLISHED"}}));});
+it("expires public content immediately rather than serving stale unpublished records",()=>{invalidateContent();expect(m.revalidateTag).toHaveBeenCalledWith("content",{expire:0});expect(m.revalidatePath).toHaveBeenCalledWith("/","layout");});
